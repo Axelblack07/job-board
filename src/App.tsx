@@ -1,5 +1,8 @@
-import { useState } from "react";
+
+
+import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Link, useParams } from "react-router-dom";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 
 type Level = 'junior' | 'middle' | 'senior';
 
@@ -19,11 +22,13 @@ type JobCardProps = {
 }
 
 type JobPageProps = {
+  jobs: Job[];
   savedIds: number[];
   onToggleSave: (id: number) => void;
 }
 
 type JobsPageProps = {
+  jobs: Job[];
   savedIds: number[];
   onToggleSave: (id: number) => void;
 }
@@ -41,14 +46,6 @@ type JobFiltersProps = {
   sortBy: SortBy;
   onSortByChange: (value: SortBy) => void;
 }
-
-const jobs: Job[] = [
-  {id: 1, title: 'Frontend Developer (React)', company: 'TechNova', salary: 2500, level: 'junior', remote: true},
-  {id: 2, title: 'Backend Engineer (Node.js)', company: 'DataFlow', salary: 4500, level: 'middle', remote: false},
-  {id: 3, title: 'Senior Fullstack Developer', company: 'CloudScale',salary: 8500, level: 'senior', remote: true},
-  {id: 4, title: 'QA Automation Engineer', company: 'QualityFirst',salary: 3000, level: 'middle', remote: true},
-  {id: 5, title: 'Junior Vue.js Developer', company: 'WebStart', salary: 1500, level: 'junior', remote: false}
-];
 
 function JobCard({job, saved, onToggleSave}: JobCardProps) {
   return (
@@ -87,7 +84,7 @@ function JobFilters({query, levelFilter, onlyRemote, sortBy, onQueryChange, onLe
   )
 }
 
-function JobsPage({savedIds, onToggleSave}: JobsPageProps) {
+function JobsPage({jobs, savedIds, onToggleSave}: JobsPageProps) {
   const [levelFilter, setLevelFilter] = useState<LevelFilter>('all');
   const [onlyRemote, setOnlyRemote] = useState(false);
   const [query, setQuery] = useState('');
@@ -135,7 +132,7 @@ function JobsPage({savedIds, onToggleSave}: JobsPageProps) {
 }
 
 
-function JobPage({savedIds, onToggleSave}: JobPageProps){
+function JobPage({jobs, savedIds, onToggleSave}: JobPageProps){
 const {id} = useParams();
 const job = jobs.find((b) => b.id === Number(id));
 
@@ -143,7 +140,7 @@ if(!job) {
   return <p>Вакансия не найдена</p>
 }
 
-const saved = savedIds.includes(job?.id);
+const saved = savedIds.includes(job.id);
 
 return (
 
@@ -160,8 +157,14 @@ return (
 )
 }
 
-function App() {
+function JobsApp() {
   const [savedIds, setSavedIds] = useState<number[]>([]);
+  const {data, isLoading, error} = useQuery({
+    queryKey: ['jobs'],
+    queryFn: () => fetch('/jobs.json').then((res) => res.json() as Promise<Job[]>),
+  });
+
+
   const toggle = (id: number) => {
     if(savedIds.includes(id)) {
       setSavedIds(savedIds.filter((x) => x !== id));
@@ -170,18 +173,28 @@ function App() {
     }
   }
 
-return (
-  <BrowserRouter>
+  if(isLoading) return <p>Загрузка...</p>;
+  if(error) return <p>Ошибка загрузки</p>;
+  return <BrowserRouter>
   <Link to="/">Главная</Link>
   <Routes>
     <Route path="/"
-    element={<JobsPage savedIds={savedIds} onToggleSave={toggle} />} />
+    element={<JobsPage savedIds={savedIds} onToggleSave={toggle} jobs={data??[]} />} />
     <Route path="/jobs/:id" 
-    element={<JobPage savedIds={savedIds} onToggleSave={toggle} />} />
+    element={<JobPage savedIds={savedIds} onToggleSave={toggle} jobs={data??[]} />} />
   </Routes>
   </BrowserRouter>
+}
+
+const queryClient = new QueryClient();
+
+function App() {  
+  
+return (
+  <QueryClientProvider client={queryClient}>
+  <JobsApp/>
+  </QueryClientProvider>
 )
 }
 export default App;
-
 
