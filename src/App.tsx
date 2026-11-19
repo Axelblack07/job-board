@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Link, useParams } from "react-router-dom"
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import {create} from 'zustand';
 
+
 type Level = 'junior' | 'middle' | 'senior';
 
 type Job = {
@@ -15,8 +16,6 @@ type Job = {
   remote: boolean;
   level: Level;
 }
-
-
 
 type JobCardProps = {
   job: Job;
@@ -35,6 +34,11 @@ type JobsPageProps = {
 type SavedStore = {
   savedIds: number[];
   onToggleSave: (id: number) => void;
+}
+
+type SaveButtonProps = {
+  saved: boolean;
+  onClick: () => void;
 }
 
 const useSavedStore = create<SavedStore>((set) => ({
@@ -61,40 +65,48 @@ type JobFiltersProps = {
   onSortByChange: (value: SortBy) => void;
 }
 
+function SaveButton({saved, onClick}:SaveButtonProps) {
+  return(
+    <button className={ `px-2 py-1 mt-2 border-2 rounded-lg  ${saved ? "text-white bg-sky-500" : "text-slate-500 bg-gray-200 hover:bg-gray-400"}`} onClick={onClick}
+    >
+      {saved ? 'Сохранено' : 'Сохранить'}
+    </button>
+  )
+}
+
 function JobCard({job, saved, onToggleSave}: JobCardProps) {
   return (
-    <div>
-      <h2>
-        <Link to={`/jobs/${job.id}`} >{job.title}</Link> {saved ?'⭐' :null}
+    <div className="border-2 rounded-lg p-4 hover:shadow-xl bg-amber-300">
+      <h2 className="text-sky-600 text-2xl">
+        <Link to={`/jobs/${job.id}`}>{job.title}</Link>{saved ?'⭐' :null}
       </h2>
-      <p>{job.company}</p>
-      <p>{job.salary}</p>
-      <p>{job.level}</p>
-      <p>{job.remote === true ? 'Удалённо' : 'Офис'}</p>
-      <button onClick={()=> onToggleSave(job.id)}>{saved ? 'Сохранено' : 'Сохранить'}</button>
-
+      <p className="text-lg">Компания: <strong>{job.company}</strong> </p>
+      <p>Зарплата: <strong>{job.salary}</strong></p>
+      <p>Требуемая квалификация: <strong>{job.level}</strong></p>
+      <p>Формат работы: <strong>{job.remote === true ? 'Удалённо' : 'Офис'}</strong></p>
+      {/* <button className={ `px-2 py-1 mt-2 border-2 rounded-lg  ${saved ? "text-white bg-sky-500" : "text-slate-500 bg-gray-200 hover:bg-gray-400"}` } onClick={()=> onToggleSave(job.id)}>{saved ? 'Сохранено' : 'Сохранить'}</button> */}
+      <SaveButton saved={saved} onClick={() => onToggleSave(job.id)}/>
     </div>
   )
 }
 
 function JobFilters({query, levelFilter, onlyRemote, sortBy, onQueryChange, onLevelFilterChange, onOnlyRemoteChange, onSortByChange}: JobFiltersProps) {
   return (
-    <>
-
-    <select value={levelFilter} onChange={(e) => onLevelFilterChange(e.target.value as LevelFilter)}>
+    <div className="flex flex-wrap items-center gap-4 mb-4">
+    <select className="border-2 rounded-lg px-2 py-1" value={levelFilter} onChange={(e) => onLevelFilterChange(e.target.value as LevelFilter)}>
     <option value="all">Все</option>
     <option value="junior">junior</option>
     <option value="middle">middle</option>
     <option value="senior">senior</option>
   </select>
 
-  <input type="checkbox" checked={onlyRemote} onChange={() => onOnlyRemoteChange(!onlyRemote)} />
-  <input type="text" value={query} onChange={(e) => onQueryChange(e.target.value)}/>
-  <select value={sortBy} onChange={(e) => onSortByChange(e.target.value as SortBy)}>
+  <label className="flex items-center gap-2"> <input type="checkbox" checked={onlyRemote} onChange={() => onOnlyRemoteChange(!onlyRemote)} /> Только удалённо</label>
+  <input placeholder="Поиск по названию" className="border-2 rounded-lg px-2 py-1" type="text" value={query} onChange={(e) => onQueryChange(e.target.value)}/>
+  <select className="border-2 rounded-lg px-2 py-1" value={sortBy} onChange={(e) => onSortByChange(e.target.value as SortBy)}>
     <option value="none">Без сортировки</option>
     <option value="salary-desc">Сначала дорогие</option>
   </select>
-    </>
+    </div>
   )
 }
 
@@ -120,10 +132,10 @@ const onToggleSave = useSavedStore((state) => state.onToggleSave);
   
   return (
 <>  
-  
+  <div className="max-w-3xl mx-auto p-4">
   <p>Сохранено: {savedIds.length}</p>
-  <label><input type="checkbox" checked={onlySaved} onChange={() => setOnlySaved(!onlySaved)} />Только сохраненные</label>
-  {visibleJobs.length === 0 && <p>Ничего не найдено</p>}
+  <label className="flex items-center gap-2"><input type="checkbox" checked={onlySaved} onChange={() => setOnlySaved(!onlySaved)} />Только сохраненные</label>
+  
   <JobFilters
   query={query}
   onQueryChange={setQuery}
@@ -134,7 +146,10 @@ const onToggleSave = useSavedStore((state) => state.onToggleSave);
   sortBy={sortBy}
   onSortByChange={setSortBy}
   />
-  {visibleJobs.map((job) => (
+  
+
+    {visibleJobs.length === 0 && <p>Ничего не найдено</p>}
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{visibleJobs.map((job) => (
     <JobCard
   key={job.id}
   job={job}
@@ -142,7 +157,8 @@ const onToggleSave = useSavedStore((state) => state.onToggleSave);
   onToggleSave={onToggleSave}
   />
   ))}
-  
+  </div> 
+  </div>
   </>
   )
 }
@@ -154,19 +170,26 @@ const savedIds = useSavedStore((state) => state.savedIds);
 const onToggleSave = useSavedStore((state) => state.onToggleSave);
 
 const job = jobs.find((b) => b.id === Number(id));
-if(!job) return <p>Вакансия не найдена</p>;
+if(!job) return <div className="max-w-3xl mx-auto p-4">
+  <Link to="/" className="hover:underline text-black px-2 py-1 text-sm">Назад к списку</Link>
+  <p>Вакансия не найдена</p>
+  </div>;
 
 const saved = savedIds.includes(job.id)
 
 return (
 
-  <div>
-    <h2>{job.title}{saved ?'⭐' :null}</h2>
-    <p>{job.company}</p>
-    <p>{job.salary}</p>
-    <p>{job.level}</p>
-    <p>{job.remote === true ? 'Удалённо' : 'Офис'}</p>
-    <button onClick={()=> onToggleSave(job.id)}>{saved ? 'Сохранено' : 'Сохранить'}</button>
+  <div className="max-w-3xl mx-auto p-4">
+    <Link to="/" className="hover:underline text-black px-2 py-1 text-sm">Назад к списку</Link>
+    <div className="bg-amber-400 p-10 rounded-2xl">
+    <h2 className="text-sky-600 text-2xl" >{job.title}{saved ?'⭐' :null}</h2>
+    <p className="text-lg">Компания: <strong>{job.company}</strong> </p>
+      <p>Зарплата: <strong>{job.salary}</strong></p>
+      <p>Требуемая квалификация: <strong>{job.level}</strong></p>
+    <p>Формат работы: <strong>{job.remote === true ? 'Удалённо' : 'Офис'}</strong></p>
+    {/* <button className={ `px-2 py-1 mt-2 border-2 rounded-lg  ${saved ? "text-white bg-sky-500" : "text-slate-500 bg-gray-200 hover:bg-gray-400"}` } onClick={()=> onToggleSave(job.id)}>{saved ? 'Сохранено' : 'Сохранить'}</button> */}
+    <SaveButton saved={saved} onClick={() => onToggleSave(job.id)}/>
+    </div>
   </div>
 )
 }
@@ -180,7 +203,7 @@ function JobsApp() {
   if(isLoading) return <p>Загрузка...</p>;
   if(error) return <p>Ошибка загрузки</p>;
   return <BrowserRouter>
-  <Link to="/">Главная</Link>
+  <nav className="bg-gray-800 text-white px-4 py-3"><Link to="/" className="text-white px-2 py-1 text-2xl">Главная</Link></nav>
   <Routes>
     <Route path="/"
     element={<JobsPage jobs={data??[]} />} />
@@ -201,4 +224,3 @@ return (
 )
 }
 export default App;
-
