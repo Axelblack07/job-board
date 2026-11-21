@@ -1,75 +1,45 @@
-# React + TypeScript + Vite
+Job Board
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Учебное приложение для просмотра вакансий: список с поиском, фильтрами и сортировкой, страница вакансии и возможность сохранять понравившиеся.
 
-Currently, two official plugins are available:
+Что умеет
+Список вакансий в виде карточек, адаптивная сетка (одна колонка на телефоне, две на широком экране)
+Поиск по названию без учёта регистра
+Фильтры: уровень (junior / middle / senior), только удалённые, только сохранённые
+Сортировка по зарплате (сначала дорогие)
+Сохранение вакансий с счётчиком, состояние общее для списка и страницы вакансии
+Отдельная страница вакансии по адресу /jobs/:id, сообщение для несуществующей вакансии
+Состояния загрузки и ошибки при получении данных
+Стек
+React 19 + TypeScript
+Vite
+React Router: страницы и навигация
+TanStack Query: загрузка данных
+Zustand: хранилище сохранённых вакансий
+Tailwind CSS: оформление
+Как устроено
+Данные берутся из public/jobs.json через useQuery
+Сохранённые вакансии лежат в хранилище Zustand, которое читают обе страницы
+Фильтры, поиск и сортировка применяются к списку цепочкой filter и копией массива для sort, исходные данные не меняются
+Компоненты: JobCard, JobFilters, SaveButton, страницы JobsPage и JobPage
+Типы описаны явно: Job, Level, props каждого компонента, union-типы для фильтров
+Запуск
+bash
+pnpm install
+pnpm dev
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Подойдёт и npm: npm install, npm run dev. Приложение откроется по адресу, который покажет Vite (обычно http://localhost:5173).
 
-## React Compiler
+Скриншоты
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Список вакансий
 
-## Expanding the ESLint configuration
+Страница вакансии
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
-```
-
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
-```
+Ограничения
+Сохранённые вакансии хранятся в памяти и сбрасываются при обновлении страницы
+Вакансии это статичный файл, настоящего сервера нет
+Планы
+Форма добавления вакансии с проверкой полей (react-hook-form + Zod)
+Сохранение избранного между перезагрузками
+Тесты на Vitest и React Testing Library

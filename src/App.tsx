@@ -78,13 +78,12 @@ function JobCard({job, saved, onToggleSave}: JobCardProps) {
   return (
     <div className="border-2 rounded-lg p-4 hover:shadow-xl bg-amber-300">
       <h2 className="text-sky-600 text-2xl">
-        <Link to={`/jobs/${job.id}`}>{job.title}</Link>{saved ?'⭐' :null}
+        <Link to={`/jobs/${job.id}`}>{job.title}</Link>{saved ?' ⭐' :null}
       </h2>
       <p className="text-lg">Компания: <strong>{job.company}</strong> </p>
-      <p>Зарплата: <strong>{job.salary}</strong></p>
+      <p>Зарплата: <strong>{job.salary}$</strong></p>
       <p>Требуемая квалификация: <strong>{job.level}</strong></p>
       <p>Формат работы: <strong>{job.remote === true ? 'Удалённо' : 'Офис'}</strong></p>
-      {/* <button className={ `px-2 py-1 mt-2 border-2 rounded-lg  ${saved ? "text-white bg-sky-500" : "text-slate-500 bg-gray-200 hover:bg-gray-400"}` } onClick={()=> onToggleSave(job.id)}>{saved ? 'Сохранено' : 'Сохранить'}</button> */}
       <SaveButton saved={saved} onClick={() => onToggleSave(job.id)}/>
     </div>
   )
@@ -180,14 +179,13 @@ const saved = savedIds.includes(job.id)
 return (
 
   <div className="max-w-3xl mx-auto p-4">
-    <Link to="/" className="hover:underline text-black px-2 py-1 text-sm">Назад к списку</Link>
+    <Link to="/" className="hover:underline text-black py-1 text-sm">Назад к списку</Link>
     <div className="bg-amber-400 p-10 rounded-2xl">
-    <h2 className="text-sky-600 text-2xl" >{job.title}{saved ?'⭐' :null}</h2>
+    <h2 className="text-sky-600 text-2xl" >{job.title}{saved ?' ⭐' :null}</h2>
     <p className="text-lg">Компания: <strong>{job.company}</strong> </p>
-      <p>Зарплата: <strong>{job.salary}</strong></p>
+      <p>Зарплата: <strong>{job.salary}$</strong></p>
       <p>Требуемая квалификация: <strong>{job.level}</strong></p>
     <p>Формат работы: <strong>{job.remote === true ? 'Удалённо' : 'Офис'}</strong></p>
-    {/* <button className={ `px-2 py-1 mt-2 border-2 rounded-lg  ${saved ? "text-white bg-sky-500" : "text-slate-500 bg-gray-200 hover:bg-gray-400"}` } onClick={()=> onToggleSave(job.id)}>{saved ? 'Сохранено' : 'Сохранить'}</button> */}
     <SaveButton saved={saved} onClick={() => onToggleSave(job.id)}/>
     </div>
   </div>
