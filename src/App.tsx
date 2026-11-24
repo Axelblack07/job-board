@@ -1,9 +1,13 @@
 
 
 import { useState} from "react";
-import { BrowserRouter, Routes, Route, Link, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, useParams, useNavigate} from "react-router-dom";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import {create} from 'zustand';
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 
 
 type Level = 'junior' | 'middle' | 'senior';
@@ -30,6 +34,17 @@ type JobPageProps = {
 type JobsPageProps = {
   jobs: Job[];
 }
+
+type JobsStore = {
+  extraJobs: Job[];
+  addJob: (job: Job) => void;
+}
+
+const useJobsStore = create<JobsStore>((set) => ({
+  extraJobs: [],
+  addJob: (job) => 
+    set((state) => ({extraJobs: [...state.extraJobs, job]})),
+}));
 
 type SavedStore = {
   savedIds: number[];
@@ -192,21 +207,89 @@ return (
 )
 }
 
+
+const jobScheme = z.object({
+  title: z.string().min(3, "Минимум 3 символа"),
+  company: z.string().min(2, "Минимум 2 символа"),
+  salary: z.number({error: "Введите число"}).min(1, "Оклад должен быть больше нуля"),
+  level: z.enum(["junior", "middle", "senior"]),
+  remote: z.boolean(),
+});
+
+type JobForm = z.infer<typeof jobScheme>;
+
+function AddJobPage() {
+
+  const {register, handleSubmit, formState: { errors }} = 
+  useForm<JobForm> ({
+    resolver: zodResolver(jobScheme),
+  });
+
+  const navigate = useNavigate();
+  const addJob = useJobsStore((state) => state.addJob);
+
+  return (
+    <div className="max-w-3xl mx-auto p-4 ">
+      <Link to="/" className="hover:underline text-black py-1 text-sm">Назад к списку</Link>
+    <form className="bg-amber-400 p-10 rounded-2xl" onSubmit={handleSubmit((data) => {
+    addJob({ id: Date.now(), ...data});
+    navigate("/");
+  })} >
+
+      <label className="text-sky-600 text-2xl">Название</label>
+      <input className="border m-2" {...register('title')} />
+      {errors.title && <p>{errors.title.message}</p>}
+
+      <label className="text-lg">Название компании</label>
+      <input className="border m-2 text-lg" {...register('company')} />
+      {errors.company && <p>{errors.company.message}</p>}<br/>
+
+      <label className="text-lg">Оклад на руки</label>
+      <input className="border" type="number" {...register('salary', {valueAsNumber: true})} />
+      {errors.salary && <p>{errors.salary.message}</p>}<br/>
+
+      <label className="text-lg">Уровень квалификации</label>
+      <select className="border" {...register("level")}>
+        <option value="junior">junior</option>
+        <option value="middle">middle</option>
+        <option value="senior">senior</option>
+      </select>
+      {errors.level && <p>{errors.level.message}</p>}<br/>
+
+      <label className="text-lg">Удаленная работа?</label>
+      <input type="checkbox" {...register('remote')} /> <br/>
+
+      <button type="submit" className="px-2 py-1 mt-2 border-2 rounded-lg text-white bg-sky-500 hover:bg-sky-600">Добавить</button>
+
+    </form>
+          </div>
+  )
+}
+
 function JobsApp() {
   const {data, isLoading, error} = useQuery({
     queryKey: ['jobs'],
     queryFn: () => fetch('/jobs.json').then((res) => res.json() as Promise<Job[]>),
   });
+  const extraJobs = useJobsStore((state) => state.extraJobs);
 
   if(isLoading) return <p>Загрузка...</p>;
   if(error) return <p>Ошибка загрузки</p>;
+
+  const allJobs = [...(data ?? []), ...extraJobs];
   return <BrowserRouter>
-  <nav className="bg-gray-800 text-white px-4 py-3"><Link to="/" className="text-white px-2 py-1 text-2xl">Главная</Link></nav>
+  <nav className="bg-gray-800 text-white px-4 py-3">
+    <Link to="/" className="text-white px-2 py-1 text-2xl">Главная</Link>
+
+    <Link to="/add" className="text-white px-2 py-1 text-xl">Добавить вакансию</Link>
+  </nav>
   <Routes>
     <Route path="/"
-    element={<JobsPage jobs={data??[]} />} />
+    element={<JobsPage jobs={allJobs} />} />
     <Route path="/jobs/:id" 
-    element={<JobPage jobs={data??[]} />} />
+    element={<JobPage jobs={allJobs} />} />
+    <Route path="/add"
+    element={<AddJobPage/>} />
   </Routes>
   </BrowserRouter>
 }
